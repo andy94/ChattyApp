@@ -2,8 +2,6 @@ package idp.andrei.chatty;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -13,6 +11,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
+
+import idp.andrei.chatty.utils.User;
 
 public class MyProfileActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -30,8 +31,17 @@ public class MyProfileActivity extends AppCompatActivity
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
+        /* Navigation *****************************************************************************/
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        View mHeaderView = navigationView.getHeaderView(0);
+        TextView usernameHeader = (TextView) mHeaderView.findViewById(R.id.nav_user_name);
+        usernameHeader.setText(User.completeName);
+
         navigationView.setNavigationItemSelectedListener(this);
+
+        navigationView.getMenu().getItem(0).setChecked(true);
+        /* END Navigation *************************************************************************/
+
     }
 
     @Override
@@ -75,12 +85,14 @@ public class MyProfileActivity extends AppCompatActivity
         if (id == R.id.my_profile) {
 
         } else if (id == R.id.friends) {
-
+            Intent intent = new Intent(this, FriendsActivity.class);
+            startActivity(intent);
         } else if (id == R.id.chats) {
             Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);
         } else if(id == R.id.groups){
-
+            Intent intent = new Intent(this, GroupsActivity.class);
+            startActivity(intent);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

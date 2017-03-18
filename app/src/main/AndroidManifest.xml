@@ -16,7 +16,7 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".LoginActivity"
             android:label="Chatty">
@@ -35,6 +35,18 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="idp.andrei.chatty.MainActivity" />
         </activity>
+        <activity
+            android:name=".FriendsActivity"
+            android:label="Friends"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".GroupsActivity"
+            android:label="Groups"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".ChatActivity"
+            android:label="Chat"
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>

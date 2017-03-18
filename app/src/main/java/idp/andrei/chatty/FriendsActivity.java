@@ -17,29 +17,19 @@ import android.widget.TextView;
 
 import idp.andrei.chatty.utils.User;
 
-public class MainActivity extends AppCompatActivity
+public class FriendsActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_friends);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        final Intent intent = new Intent(this, ChatActivity.class);
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                startActivity(intent);
-            }
-        });
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-            this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
@@ -52,7 +42,7 @@ public class MainActivity extends AppCompatActivity
 
         navigationView.setNavigationItemSelectedListener(this);
 
-        navigationView.getMenu().getItem(2).setChecked(true);
+        navigationView.getMenu().getItem(1).setChecked(true);
         /* END Navigation *************************************************************************/
 
 
@@ -100,10 +90,10 @@ public class MainActivity extends AppCompatActivity
             Intent intent = new Intent(this, MyProfileActivity.class);
             startActivity(intent);
         } else if (id == R.id.friends) {
-            Intent intent = new Intent(this, FriendsActivity.class);
-            startActivity(intent);
-        } else if (id == R.id.chats) {
 
+        } else if (id == R.id.chats) {
+            Intent intent = new Intent(this, MainActivity.class);
+            startActivity(intent);
         } else if(id == R.id.groups){
             Intent intent = new Intent(this, GroupsActivity.class);
             startActivity(intent);

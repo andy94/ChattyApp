@@ -33,6 +33,8 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
+import idp.andrei.chatty.utils.User;
+
 import static android.Manifest.permission.READ_CONTACTS;
 
 /**
@@ -50,6 +52,22 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         // Set up the login form.
+
+
+        User.completeName = "Andrei Ursache";
+        User.firstName = "Andrei";
+        User.lastName = "Ursache";
+
+
+
+
+
+
+
+
+
+
+
 
         Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {

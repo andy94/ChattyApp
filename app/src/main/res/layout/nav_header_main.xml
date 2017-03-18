@@ -25,6 +25,7 @@
         android:layout_height="wrap_content"
         android:text="Unknown Name"
         android:textSize="25dp"
+        android:id="@+id/nav_user_name"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
 
