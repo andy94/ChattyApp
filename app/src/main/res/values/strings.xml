@@ -24,4 +24,5 @@
     <string name="title_activity_groups">GroupsActivity</string>
     <string name="title_activity_chat">ChatActivity</string>
     <string name="title_activity_create_conversation">CreateConversationActivity</string>
+    <string name="facebook_app_id">229397687528772</string>
 </resources>

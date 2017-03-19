@@ -15,6 +15,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DatabaseReference;
+
 import idp.andrei.chatty.utils.User;
 
 public class MainActivity extends AppCompatActivity
@@ -56,6 +59,10 @@ public class MainActivity extends AppCompatActivity
         /* END Navigation *************************************************************************/
 
 
+
+
+        DatabaseReference dbr = User.firebaseReference.child("mesg");
+        dbr.setValue("URAA!!MAIN!!!");
     }
 
     @Override
