@@ -47,7 +47,7 @@ public class GroupsActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         View mHeaderView = navigationView.getHeaderView(0);
         TextView usernameHeader = (TextView) mHeaderView.findViewById(R.id.nav_user_name);
-        usernameHeader.setText(User.completeName);
+        usernameHeader.setText(User.name);
 
         navigationView.setNavigationItemSelectedListener(this);
 

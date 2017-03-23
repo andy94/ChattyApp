@@ -53,12 +53,18 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
 
 import idp.andrei.chatty.utils.User;
 
@@ -93,7 +99,7 @@ public class LoginActivity extends AppCompatActivity {
         // Set up the login form.
 
 
-        User.completeName = "First Last";
+        User.name = "First Last";
 
 
         User.firebaseReference = FirebaseDatabase.getInstance().getReference();
@@ -105,16 +111,105 @@ public class LoginActivity extends AppCompatActivity {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     // User is signed in
-                    Log.d("FIRE", "onAuthStateChanged:signed_in:" + user.getUid() + " " + user.getPhotoUrl() + " " + user.getDisplayName());
-
                     User.firebaseReference = FirebaseDatabase.getInstance().getReference();
                     DatabaseReference dbr = User.firebaseReference.child("mesg1");
-
                     dbr.setValue("URAA!!Success!!!");
+
+                    if(AccessToken.getCurrentAccessToken() == null){
+                        return;
+                    }
+
+                    GraphRequest request = GraphRequest.newMeRequest(AccessToken.getCurrentAccessToken(),
+                            new GraphRequest.GraphJSONObjectCallback() {
+                                @Override
+                                public void onCompleted(JSONObject object, GraphResponse response) {
+                                    Log.d("LoginActivity1!!!", response.toString());
+                                    Log.d("LoginActivity2!!!", object.toString());
+
+                                   Toast.makeText(getApplicationContext(), "LogIn button onComplete", Toast.LENGTH_SHORT).show();
+
+                                    String email = object.optString("email");
+                                    String id = object.optString("id");
+                                    String name = object.optString("name");
+                                    String pictureUrl = "";
+                                    double lastLoginTime = 0;
+
+
+
+                                    try {
+                                        JSONObject picurljson = object.getJSONObject("picture");
+                                        JSONObject picurljsondata = picurljson.getJSONObject("data");
+                                        String url = picurljsondata.optString("url");
+                                        if (!url.isEmpty()) {
+                                            url = url.replace("\"", "");
+                                            url = url.replace("\\", "");
+                                            pictureUrl = url;
+                                        }
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                    DateFormat df = DateFormat.getDateTimeInstance();
+                                    df.setTimeZone(TimeZone.getTimeZone("gmt"));
+                                    lastLoginTime = System.currentTimeMillis()/1000;
+
+                                    Map<String,String> friends = new HashMap<String,String>();
+                                    try {
+                                        JSONObject friendsJson = object.getJSONObject("friends");
+                                        JSONArray friendsData = friendsJson.getJSONArray("data");
+
+                                        for (int i = 0, size = friendsData.length(); i < size; i++)
+                                        {
+                                            JSONObject objectInArray = friendsData.getJSONObject(i);
+                                            friends.put(objectInArray.optString("id"),objectInArray.optString("name"));
+                                        }
+
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+
+
+
+//                                    ImageView profilePicture = (ImageView) findViewById(R.id.profileImageView);
+//                                    profilePicture.setImageBitmap(profilePictureView.getDrawingCache());
+
+//                                    greeting.setVisibility(View.VISIBLE);
+//                                    greeting.setText(getString(R.string.hello_user, profile.getFirstName()));
+
+
+
+                                    User.id = id;
+                                    User.name = name;
+                                    User.email = email;
+                                    User.lastLoginTime= lastLoginTime;
+                                    User.profilePictureUrl = pictureUrl;
+                                    User.firebaseReference = FirebaseDatabase.getInstance().getReference();
+                                    User.friends = friends;
+
+                                    User.firebaseReference.child("users").child(User.id).setValue(User.getMapForFirebase());
+
+
+                                    try {
+                                        Thread.sleep(1000,0);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                    goToMainActivity();
+
+                                }
+                            });
+
+                    Bundle parameters = new Bundle();
+                    parameters.putString("fields", "id,name,email,picture.width(300).height(300),friends");
+                    request.setParameters(parameters);
+                    request.executeAsync();
+
 
                 } else {
                     // User is signed out
-                    Log.d("FIRE", "onAuthStateChanged:signed_out");
+//                    Toast toast = Toast.makeText(getApplicationContext(), "firebaseListener signed out", Toast.LENGTH_SHORT);
+//                    toast.show();
                 }
             }
         };
@@ -145,22 +240,6 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onSuccess(LoginResult loginResult) {
                 Log.d("FBK", "facebook:onSuccess:" + loginResult);
-
-                GraphRequest request = GraphRequest.newMeRequest(loginResult.getAccessToken(),
-                        new GraphRequest.GraphJSONObjectCallback() {
-                            @Override
-                            public void onCompleted(JSONObject object, GraphResponse response) {
-                                Log.v("LoginActivity", response.toString());
-
-
-                            }
-                        });
-
-                Bundle parameters = new Bundle();
-                parameters.putString("fields", "id,name,email,picture,friends");
-                request.setParameters(parameters);
-                request.executeAsync();
-
                 handleFacebookAccessToken(loginResult.getAccessToken());
             }
 
@@ -178,7 +257,6 @@ public class LoginActivity extends AppCompatActivity {
         });
 
 
-        User.firebaseReference = FirebaseDatabase.getInstance().getReference();
 
 
     }
@@ -197,16 +275,11 @@ public class LoginActivity extends AppCompatActivity {
                         // the auth state listener will be notified and logic to handle the
                         // signed in user can be handled in the listener.
                         if (!task.isSuccessful()) {
-                            Log.w("FBK", "signInWithCredential", task.getException());
-                            Toast.makeText(LoginActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+//                            Toast.makeText(LoginActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
                         }
 
 
-                        User.firebaseReference = FirebaseDatabase.getInstance().getReference();
-                        DatabaseReference dbr = User.firebaseReference.child("mesg1");
 
-                        dbr.setValue("URAA!!Success!!!");
-                        goToMainActivity();
                     }
                 });
     }
