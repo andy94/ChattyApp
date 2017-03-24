@@ -13,7 +13,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
@@ -52,6 +54,10 @@ public class MainActivity extends AppCompatActivity
         View mHeaderView = navigationView.getHeaderView(0);
         TextView usernameHeader = (TextView) mHeaderView.findViewById(R.id.nav_user_name);
         usernameHeader.setText(User.name);
+
+        ImageView userPic = (ImageView) mHeaderView.findViewById(R.id.headerImgView);
+        userPic.setImageBitmap(User.image);
+
 
         navigationView.setNavigationItemSelectedListener(this);
 

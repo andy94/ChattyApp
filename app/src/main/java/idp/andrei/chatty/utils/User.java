@@ -1,5 +1,10 @@
 package idp.andrei.chatty.utils;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.widget.ImageView;
+
+import com.facebook.login.widget.ProfilePictureView;
 import com.google.firebase.database.DatabaseReference;
 
 import java.util.HashMap;
@@ -14,6 +19,8 @@ public class User {
     public static String name;
     public static String email;
     public static double lastLoginTime;
+
+    public static Bitmap image;
 
     public static String profilePictureUrl;
     public static DatabaseReference firebaseReference;

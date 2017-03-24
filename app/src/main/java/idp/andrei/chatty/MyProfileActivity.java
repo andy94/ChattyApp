@@ -11,7 +11,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.facebook.login.LoginManager;
 
 import idp.andrei.chatty.utils.User;
 
@@ -37,10 +41,39 @@ public class MyProfileActivity extends AppCompatActivity
         TextView usernameHeader = (TextView) mHeaderView.findViewById(R.id.nav_user_name);
         usernameHeader.setText(User.name);
 
+        ImageView userPic = (ImageView) mHeaderView.findViewById(R.id.headerImgView);
+        userPic.setImageBitmap(User.image);
+
         navigationView.setNavigationItemSelectedListener(this);
 
         navigationView.getMenu().getItem(0).setChecked(true);
         /* END Navigation *************************************************************************/
+
+
+        ImageView myProfilePic = (ImageView) findViewById(R.id.myProfilePicture);
+        myProfilePic.setImageBitmap(User.image);
+
+        TextView myProfileName = (TextView) findViewById(R.id.myProfileName);
+        myProfileName.setText(User.name);
+
+        ((TextView) findViewById(R.id.myProfileEmail)).setText(User.email);
+        ((TextView) findViewById(R.id.myProfileNrFriends)).setText(Integer.toString(User.friends.size()));
+
+
+        final Button button = (Button) findViewById(R.id.logOutButton);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                LoginManager.getInstance().logOut();
+
+                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                startActivity(intent);
+            }
+        });
+
+
+
+
+
 
     }
 

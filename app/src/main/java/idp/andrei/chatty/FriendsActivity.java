@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import idp.andrei.chatty.utils.User;
@@ -39,6 +40,9 @@ public class FriendsActivity extends AppCompatActivity
         View mHeaderView = navigationView.getHeaderView(0);
         TextView usernameHeader = (TextView) mHeaderView.findViewById(R.id.nav_user_name);
         usernameHeader.setText(User.name);
+
+        ImageView userPic = (ImageView) mHeaderView.findViewById(R.id.headerImgView);
+        userPic.setImageBitmap(User.image);
 
         navigationView.setNavigationItemSelectedListener(this);
 
