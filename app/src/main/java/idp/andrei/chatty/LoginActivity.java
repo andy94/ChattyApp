@@ -85,6 +85,7 @@ import javax.net.ssl.HttpsURLConnection;
 import idp.andrei.chatty.utils.User;
 
 import static android.Manifest.permission.READ_CONTACTS;
+import static android.Manifest.permission.USE_FINGERPRINT;
 
 /**
  * A login screen that offers login via email/password.
@@ -127,9 +128,9 @@ public class LoginActivity extends AppCompatActivity {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     // User is signed in
-                    User.firebaseReference = FirebaseDatabase.getInstance().getReference();
-                    DatabaseReference dbr = User.firebaseReference.child("mesg1");
-                    dbr.setValue("URAA!!Success!!!");
+//                    User.firebaseReference = FirebaseDatabase.getInstance().getReference();
+//                    DatabaseReference dbr = User.firebaseReference.child("mesg1");
+//                    dbr.setValue("URAA!!Success!!!");
 
                     if (AccessToken.getCurrentAccessToken() == null) {
                         return;
@@ -199,6 +200,7 @@ public class LoginActivity extends AppCompatActivity {
                                     User.profilePictureUrl = pictureUrl;
                                     User.firebaseReference = FirebaseDatabase.getInstance().getReference();
                                     User.friends = friends;
+                                    User.isOnline = true;
 
                                     /* User photo */
                                     Target target = new Target() {
@@ -281,6 +283,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onError(FacebookException error) {
                 Log.d("FBK", "facebook:onError", error);
+                Toast.makeText(LoginActivity.this, "Check your internet connection!!!", Toast.LENGTH_SHORT).show();
                 // ...
             }
         });

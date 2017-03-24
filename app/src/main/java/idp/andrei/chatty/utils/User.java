@@ -20,6 +20,8 @@ public class User {
     public static String email;
     public static double lastLoginTime;
 
+    public static boolean isOnline;
+
     public static Bitmap image;
 
     public static String profilePictureUrl;
@@ -33,6 +35,7 @@ public class User {
         map.put("lastLoginTime", lastLoginTime);
         map.put("profilePictureUrl", profilePictureUrl);
         map.put("friends", friends);
+        map.put("isOnline", isOnline);
 
 
         return map;

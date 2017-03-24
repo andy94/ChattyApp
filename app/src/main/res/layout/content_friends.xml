@@ -8,13 +8,33 @@
     tools:context="idp.andrei.chatty.FriendsActivity"
     tools:showIn="@layout/app_bar_friends">
 
-    <TextView
+    <RelativeLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="My Friends!"
+        android:layout_height="0dp"
+        android:id="@+id/relLayout"
+        tools:layout_constraintTop_creator="1"
+        tools:layout_constraintBottom_creator="1"
         app:layout_constraintBottom_toBottomOf="parent"
+        tools:layout_constraintLeft_creator="1"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginLeft="-37dp"
+        app:layout_constraintVertical_bias="1.0">
+
+        <!--<EditText android:id="@+id/inputSearch"-->
+            <!--android:layout_width="fill_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:hint="Search Friends..."-->
+            <!--android:inputType="textVisiblePassword"/>-->
+
+        <ListView
+            android:paddingTop="0dp"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:id="@+id/friends_listView"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+
+    </RelativeLayout>
 
 </android.support.constraint.ConstraintLayout>

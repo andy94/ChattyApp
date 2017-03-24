@@ -64,12 +64,9 @@ public class MainActivity extends AppCompatActivity
         navigationView.getMenu().getItem(2).setChecked(true);
         /* END Navigation *************************************************************************/
 
-
-
-
-        DatabaseReference dbr = User.firebaseReference.child("mesg");
-        dbr.setValue("URAA!!MAIN!!!");
     }
+
+
 
     @Override
     public void onBackPressed() {

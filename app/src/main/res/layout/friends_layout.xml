@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/frRelLayout">
+
+    <de.hdodenhof.circleimageview.CircleImageView xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/friendPicture"
+        android:layout_marginTop="10dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginLeft="10dp"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="23dp"
+        android:layout_marginTop="10dp"
+        android:text="Unknown"
+        android:textStyle="bold"
+        android:id="@+id/friend_name"
+        android:textColor="#21adda"
+        android:layout_alignLeft="@+id/linearLayout2"
+        android:layout_alignStart="@+id/linearLayout2"/>
+
+    <Button
+        android:layout_width="100dp"
+        android:layout_height="30dp"
+        android:id="@+id/firend_chat_button"
+        android:textSize="15dp"
+        android:text="Chat"
+        android:textColor="#5c5c5c"
+        android:textAllCaps="false"
+        android:background="#e5f0f4"
+        android:layout_alignTop="@+id/friend_name"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignBottom="@+id/friendPicture" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="0dp"
+        android:id="@+id/linearLayout2"
+        android:layout_toRightOf="@+id/friendPicture"
+        android:layout_toEndOf="@+id/friendPicture"
+        android:layout_marginLeft="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_below="@+id/friend_name">
+
+        <LinearLayout
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/sportsContainer">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/isOnline"
+                android:textColor="#5c5c5c"
+                android:layout_marginBottom="5dp"
+                android:text="online"
+                android:textSize="12dp"
+                android:layout_marginLeft="3dp"/>
+
+        </LinearLayout>
+
+
+    </LinearLayout>
+</RelativeLayout>
