@@ -167,9 +167,7 @@ public class LoginActivity extends AppCompatActivity {
                                         e.printStackTrace();
                                     }
 
-                                    DateFormat df = DateFormat.getDateTimeInstance();
-                                    df.setTimeZone(TimeZone.getTimeZone("gmt"));
-                                    lastLoginTime = System.currentTimeMillis() / 1000;
+                                    lastLoginTime = System.currentTimeMillis();
 
                                     Map<String, String> friends = new HashMap<String, String>();
                                     try {
@@ -214,7 +212,7 @@ public class LoginActivity extends AppCompatActivity {
                                             hello.setVisibility(View.VISIBLE);
                                             hello.setText("Welcome, "+ User.name + "!");
 
-                                            User.firebaseReference.child("users").child(User.id).setValue(User.getMapForFirebase());
+                                            User.firebaseReference.child("users").child(User.id).updateChildren(User.getMapForFirebase());
 
 
                                             runOnUiThread(new Runnable() {

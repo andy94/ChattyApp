@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/frRelLayout">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+        android:text="Name"
+        android:textStyle="bold"
+        android:id="@+id/msg_friend_name"
+        android:textColor="#21adda"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="15dp"
+        android:layout_marginRight="10dp"
+        android:text="Date"
+        android:textColor="#c1cdd1"
+        android:id="@+id/msg_date"
+        android:layout_alignBottom="@+id/msg_friend_name"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="10dp"
+        android:textColor="#3e4041"
+        android:text="Message message message message message message message"
+        android:id="@+id/msg_message"
+        android:layout_below="@+id/msg_friend_name"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="9dp"
+        android:text="seen"
+        android:textColor="#c1ecf7"
+        android:id="@+id/msg_seen"
+        android:layout_below="@+id/msg_message"
+        android:layout_alignRight="@+id/msg_message"
+        android:layout_alignEnd="@+id/msg_message" />
+
+
+
+
+
+
+</RelativeLayout>

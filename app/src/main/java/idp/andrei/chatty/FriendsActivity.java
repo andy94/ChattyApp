@@ -123,8 +123,19 @@ public class FriendsActivity extends AppCompatActivity
                 public void onClick(View v) {
 
                     Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
+                    String cu = "";
+
+                    if (list.get(position).id.compareTo(User.id) < 0) {
+                        cu = list.get(position).id + User.id;
+                    } else {
+                        cu = User.id + list.get(position).id;
+                    }
+                    intent.putExtra("chatUid", cu);
                     intent.putExtra("uid", list.get(position).id);
+                    intent.putExtra("uid1", list.get(position).id);
                     intent.putExtra("name", list.get(position).name);
+                    intent.putExtra("userName", list.get(position).name);
+                    intent.putExtra("userName1", list.get(position).name);
                     intent.putExtra("active", list.get(position).active);
                     intent.putExtra("isGroup", false);
 
