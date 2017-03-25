@@ -269,11 +269,15 @@ public class MainActivity extends AppCompatActivity
                                                     c.text += dat.getValue().toString();
                                                 }
                                                 if (dat.getKey().toString().equalsIgnoreCase("authorName")) {
+                                                    String nm = dat.getValue().toString();
+                                                    if (nm.equals(User.name)){
+                                                        nm = "Me";
+                                                    }
                                                     if(c.text.equals("")){
-                                                        c.text = dat.getValue().toString() + ": ";
+                                                        c.text = nm + ": ";
                                                     }
                                                     else{
-                                                        c.text = dat.getValue().toString() + ": " + c.text;
+                                                        c.text = nm+ ": " + c.text;
 
                                                     }
                                                 }
@@ -304,7 +308,7 @@ public class MainActivity extends AppCompatActivity
 
 
 
-                                    if (count.get() >= total.get()) {
+                                    if (count.get() == total.get()) {
 
                                         adapter = new MyCustomAdapter(finalChats, getApplicationContext());
                                         ListView listView = (ListView) findViewById(R.id.messages_listView);

@@ -232,11 +232,15 @@ public class GroupsActivity extends AppCompatActivity
                                                     c.text += dat.getValue().toString();
                                                 }
                                                 if (dat.getKey().toString().equalsIgnoreCase("authorName")) {
+                                                    String nm = dat.getValue().toString();
+                                                    if (nm.equals(User.name)){
+                                                        nm = "Me";
+                                                    }
                                                     if(c.text.equals("")){
-                                                        c.text = dat.getValue().toString() + ": ";
+                                                        c.text = nm + ": ";
                                                     }
                                                     else{
-                                                        c.text = dat.getValue().toString() + ": " + c.text;
+                                                        c.text = nm+ ": " + c.text;
 
                                                     }
                                                 }
