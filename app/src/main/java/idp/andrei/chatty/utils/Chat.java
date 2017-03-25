@@ -7,7 +7,7 @@ package idp.andrei.chatty.utils;
 public class Chat {
     public String authorID;
     public String authorName;
-    public String authorURL;
+    public String users;
     public String text;
     public String uid;
     public long date;

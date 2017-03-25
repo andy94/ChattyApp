@@ -1,8 +1,10 @@
 package idp.andrei.chatty;
 
 import android.app.ActionBar;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -13,6 +15,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -58,6 +61,8 @@ public class ChatActivity extends AppCompatActivity {
     private String u1name = "";
     private String u2name = "";
     private boolean group = false;
+
+    private AlertDialog.Builder builerViewMembers;
 
     public class MessageListAdapter extends BaseAdapter implements ListAdapter {
 
@@ -145,13 +150,13 @@ public class ChatActivity extends AppCompatActivity {
             return view;
         }
     }
+
     @Override
     public void onBackPressed() {
-        if(group){
+        if (group) {
             Intent intent = new Intent(getApplicationContext(), GroupsActivity.class);
             startActivity(intent);
-        }
-        else{
+        } else {
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             startActivity(intent);
         }
@@ -174,6 +179,42 @@ public class ChatActivity extends AppCompatActivity {
         final String otherUserUid1 = intent.getStringExtra("uid1");
         final boolean isGroup = intent.getBooleanExtra("isGroup", false);
 
+
+        builerViewMembers = new AlertDialog.Builder(this);
+        builerViewMembers.setTitle("Group members:");
+
+
+
+        if (isGroup && cuid.equals("")) { // first time in this group
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Set Conversation Name");
+
+            final EditText input = new EditText(this);
+            builder.setView(input);
+            builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    String textName = input.getText().toString();
+                    User.firebaseReference.child("chats").child(chatID).child("name").setValue(textName);
+
+                    Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+                    toolbar.setTitle(textName);
+                    setSupportActionBar(toolbar);
+
+                }
+            });
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            });
+
+            builder.show();
+
+        }
+
+
         toolbar.setTitle(chatName);
 
         setSupportActionBar(toolbar);
@@ -181,8 +222,7 @@ public class ChatActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        dialog  = ProgressDialog.show(ChatActivity.this, "", "Loading. Please wait", true);
-
+        dialog = ProgressDialog.show(ChatActivity.this, "", "Loading. Please wait", true);
 
 
 //      Toast.makeText(ChatActivity.this,  "", Toast.LENGTH_SHORT).show();
@@ -202,23 +242,23 @@ public class ChatActivity extends AppCompatActivity {
 
 //              Toast.makeText(ChatActivity.this,  Boolean.toString(isFirst), Toast.LENGTH_SHORT).show();
                 if (isFirst) { /* first time */
-                    if(isGroup){
+                    if (isGroup) {
                         DatabaseReference chatRef = User.firebaseReference.child("chats").push();
                         chatUid = chatRef.getKey();
                         chatRef.child("users").child(User.id).setValue(User.name);
                         chatRef.child("users").child(otherUserUid).setValue(userName);
                         chatRef.child("users").child(otherUserUid1).setValue(userName1);
                         chatRef.child("isGroup").setValue(isGroup);
-                        chatRef.child("name").setValue("Group conversation");
-                    }
-                    else{
+                        User.firebaseReference.child("users").child(otherUserUid1).child("chats").child(chatUid).setValue(User.id);
+
+
+                    } else {
 
                         DatabaseReference chatRef = User.firebaseReference.child("chats").child(chatUid);
                         chatRef.child("users").child(User.id).setValue(User.name);
                         chatRef.child("users").child(otherUserUid).setValue(userName);
                         chatRef.child("isGroup").setValue(isGroup);
                     }
-
 
 
                     User.firebaseReference.child("users").child(User.id).child("chats").child(chatUid).setValue(otherUserUid);
@@ -259,7 +299,6 @@ public class ChatActivity extends AppCompatActivity {
                         mesg.put("authorName", User.name);
                         long now = System.currentTimeMillis();
                         mesg.put("date", now);
-
 
 
                         User.firebaseReference.child("chats").child(cid).child("mesg").push().setValue(mesg);
@@ -349,7 +388,16 @@ public class ChatActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
+
+        Intent intent = getIntent();
+        final boolean grp = intent.getBooleanExtra("isGroup", false);
+        if (grp) {
+            getMenuInflater().inflate(R.menu.main_group, menu);
+
+        } else {
+            getMenuInflater().inflate(R.menu.main, menu);
+
+        }
         return true;
     }
 
@@ -363,38 +411,157 @@ public class ChatActivity extends AppCompatActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.add_participant) {
 
-            if(group){ // just add a participant
 
-                DatabaseReference chatRef = User.firebaseReference.child("chats").child(chatID);
-                chatRef.child("users").child(u2uid).setValue(u2name); //
+            final CharSequence friends[] = new CharSequence[User.friends.size()];
+            int index = 0;
 
-                User.firebaseReference.child("users").child(u2uid).child("chats").child(chatID).setValue(u2uid);
-            }else{ // create and go to group
-
-                Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
-                String cu = "";
-
-                intent.putExtra("chatUid", cu);
-                intent.putExtra("uid", u1uid);
-                intent.putExtra("userName", u1name);
-                intent.putExtra("uid1", u2uid);
-                intent.putExtra("userName1", u2name);
-                intent.putExtra("name", "Group");
-
-                intent.putExtra("isGroup", true);
-
-                startActivity(intent);
+            for (Map.Entry<String, String> friend : User.friends.entrySet()) {
+                friends[index] = friend.getValue();
+                index++;
 
             }
 
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Choose a friend");
+            builder.setItems(friends, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    String n = friends[which].toString();
+                    String i = null;
 
+                    for (Map.Entry<String, String> friend : User.friends.entrySet()) {
+                        if (n.equals(friend.getValue())) {
+                            i = friend.getKey();
+                            break;
+                        }
+
+                    }
+
+
+                    if (group) { // just add a participant
+
+                        DatabaseReference chatRef = User.firebaseReference.child("chats").child(chatID);
+                        chatRef.child("users").child(i).setValue(n); //
+
+                        User.firebaseReference.child("users").child(i).child("chats").child(chatID).setValue(i);
+                    } else { // create and go to group
+
+                        Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
+                        String cu = "";
+
+                        intent.putExtra("chatUid", cu);
+                        intent.putExtra("uid", u1uid);
+                        intent.putExtra("userName", u1name);
+                        intent.putExtra("uid1", i);
+                        intent.putExtra("userName1", n);
+                        intent.putExtra("name", "Group");
+
+                        intent.putExtra("isGroup", true);
+
+                        startActivity(intent);
+
+                    }
+                }
+            });
+            builder.show();
 
 
         } else if (id == R.id.send_file) {
 
         } else if (id == R.id.share_conversation) {
 
+
+        } else if (id == R.id.view_members) {
+
+            final ArrayList<String> users = new ArrayList<>();
+            DatabaseReference dbr = User.firebaseReference.child("chats").child(chatID).child("users");
+            dbr.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    for(DataSnapshot usr : snapshot.getChildren()){
+                        users.add(usr.getValue().toString());
+                    }
+
+                    final CharSequence usersName[] = new CharSequence[users.size()];
+                    int index = 0;
+
+                    for(String u : users){
+                        usersName[index] = u;
+                        index++;
+                    }
+
+
+                    builerViewMembers.setItems(usersName, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    });
+                    builerViewMembers.show();
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+
+
+
+
+        } else if (id == R.id.leave_group) {
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Are you sure?");
+            builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    User.firebaseReference.child("users").child(User.id).child("chats").child(chatID).removeValue();
+                    User.firebaseReference.child("chats").child(chatID).child("users").child(User.id).removeValue();
+
+                    Intent intent = new Intent(getApplicationContext(), GroupsActivity.class);
+                    startActivity(intent);
+
+                }
+            });
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            });
+
+            builder.show();
+
+
+        } else if (id == R.id.change_name) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Set Conversation Name");
+
+            final EditText input = new EditText(this);
+            builder.setView(input);
+            builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    String textName = input.getText().toString();
+                    User.firebaseReference.child("chats").child(chatID).child("name").setValue(textName);
+
+                    Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+                    toolbar.setTitle(textName);
+                    setSupportActionBar(toolbar);
+
+                }
+            });
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            });
+
+            builder.show();
+
         }
+
 
         return super.onOptionsItemSelected(item);
     }

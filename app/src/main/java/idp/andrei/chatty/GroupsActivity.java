@@ -101,7 +101,11 @@ public class GroupsActivity extends AppCompatActivity
 
             // Set name in TextView
             holder.friendName.setText(list.get(position).authorName);
-            holder.lastMesg.setText(list.get(position).text);
+            String txt = list.get(position).text;
+            int leng = txt.length();
+            leng = leng <=25 ? leng : 25;
+            holder.lastMesg.setText(txt.substring(0,leng));
+            holder.isOnline.setText(list.get(position).users);
             holder.friendImage.setBackgroundResource(R.mipmap.ic_launcher6);
 
 
@@ -208,6 +212,11 @@ public class GroupsActivity extends AppCompatActivity
                                     for (DataSnapshot cht : snp.getChildren()) {
                                         if (cht.getKey().toString().equalsIgnoreCase("isGroup")) {
                                             c.group = (boolean) cht.getValue();
+                                        }
+
+                                        if (cht.getKey().toString().equalsIgnoreCase("users")) {
+                                            int nrUsers = (int)cht.getChildrenCount();
+                                            c.users = Integer.toString(nrUsers) + " members";
                                         }
 
                                         c.uid = cid;

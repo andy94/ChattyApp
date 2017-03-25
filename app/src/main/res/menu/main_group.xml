@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:id="@+id/add_participant"
+        android:title="Add Friend"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+    <item android:id="@+id/send_file"
+        android:title="Send File"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+    <item android:id="@+id/share_conversation"
+        android:title="Share Conversation"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+    <item android:id="@+id/change_name"
+        android:title="Change Name"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+    <item android:id="@+id/leave_group"
+        android:title="Leave Group"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+    <item android:id="@+id/view_members"
+        android:title="View Members"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+</menu>
