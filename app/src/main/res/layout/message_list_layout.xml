@@ -45,7 +45,7 @@
                 android:id="@+id/isOnlineMSG"
                 android:textColor="#5c5c5c"
                 android:layout_marginBottom="5dp"
-                android:text="online"
+                android:text=""
                 android:textSize="12dp"
                 android:layout_marginLeft="3dp"/>
 
@@ -58,11 +58,12 @@
         android:id="@+id/preview_mesgMSG"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/linearLayout2"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:layout_marginRight="10dp"
+        android:maxWidth="190dp"
         android:textColor="#557e8b"
-        android:maxLength="20"
-        android:text="TextView" />
+        android:text="TextView"
+        android:layout_marginRight="10dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignBottom="@+id/friendPictureMSG"
+        android:layout_below="@+id/friend_nameMSG" />
 </RelativeLayout>

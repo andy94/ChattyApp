@@ -1,6 +1,7 @@
 package idp.andrei.chatty;
 
 import android.app.ActionBar;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -47,6 +48,8 @@ import idp.andrei.chatty.utils.User;
 import static android.text.format.DateUtils.getRelativeTimeSpanString;
 
 public class ChatActivity extends AppCompatActivity {
+
+    private ProgressDialog dialog;
 
     private ChatActivity.MessageListAdapter adapter;
     private String chatID = "";
@@ -178,6 +181,9 @@ public class ChatActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
+        dialog  = ProgressDialog.show(ChatActivity.this, "", "Loading. Please wait", true);
+
+
 
 //      Toast.makeText(ChatActivity.this,  "", Toast.LENGTH_SHORT).show();
 
@@ -203,6 +209,7 @@ public class ChatActivity extends AppCompatActivity {
                         chatRef.child("users").child(otherUserUid).setValue(userName);
                         chatRef.child("users").child(otherUserUid1).setValue(userName1);
                         chatRef.child("isGroup").setValue(isGroup);
+                        chatRef.child("name").setValue("Group conversation");
                     }
                     else{
 
@@ -317,6 +324,13 @@ public class ChatActivity extends AppCompatActivity {
                     ListView listView = (ListView) findViewById(R.id.chat_messages_listView);
                     listView.setSelection(listView.getCount() - 1);
                     listView.setAdapter(adapter);
+
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            dialog.dismiss();
+                        }
+                    }).start();
                 }
             }
 

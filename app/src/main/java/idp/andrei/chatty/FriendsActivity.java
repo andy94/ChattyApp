@@ -1,5 +1,6 @@
 package idp.andrei.chatty;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -46,6 +47,7 @@ public class FriendsActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private MyCustomAdapter adapter;
+    private ProgressDialog dialog;
 
     public class MyCustomAdapter extends BaseAdapter implements ListAdapter {
 
@@ -175,6 +177,9 @@ public class FriendsActivity extends AppCompatActivity
         navigationView.getMenu().getItem(1).setChecked(true);
         /* END Navigation *************************************************************************/
 
+        dialog  = ProgressDialog.show(FriendsActivity.this, "", "Loading. Please wait", true);
+
+
         final ArrayList<Friend> friends = new ArrayList<>();
 
         final AtomicInteger count = new AtomicInteger();
@@ -219,6 +224,14 @@ public class FriendsActivity extends AppCompatActivity
                         adapter = new MyCustomAdapter(friends,getApplicationContext());
                         ListView listView = (ListView) findViewById(R.id.friends_listView);
                         listView.setAdapter(adapter);
+
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                dialog.dismiss();
+                            }
+                        }).start();
+
                     }
                 }
 

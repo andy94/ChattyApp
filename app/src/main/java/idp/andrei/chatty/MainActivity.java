@@ -1,5 +1,6 @@
 package idp.andrei.chatty;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity
 
 
     private MyCustomAdapter adapter;
+    private ProgressDialog dialog;
 
     public class MyCustomAdapter extends BaseAdapter implements ListAdapter {
 
@@ -205,6 +207,9 @@ public class MainActivity extends AppCompatActivity
         /* END Navigation *************************************************************************/
 
 
+
+        dialog  = ProgressDialog.show(MainActivity.this, "", "Loading. Please wait", true);
+
         final ArrayList<Chat> chats = new ArrayList<>();
         final ArrayList<Chat> finalChats = new ArrayList<>();
 
@@ -259,9 +264,19 @@ public class MainActivity extends AppCompatActivity
                                             for (DataSnapshot msg : cht.getChildren()) {
                                                 last = msg;
                                             }
+                                            c.text = "";
                                             for (DataSnapshot dat : last.getChildren()) {
                                                 if (dat.getKey().toString().equalsIgnoreCase("text")) {
-                                                    c.text = dat.getValue().toString();
+                                                    c.text += dat.getValue().toString();
+                                                }
+                                                if (dat.getKey().toString().equalsIgnoreCase("authorName")) {
+                                                    if(c.text.equals("")){
+                                                        c.text = dat.getValue().toString() + ": ";
+                                                    }
+                                                    else{
+                                                        c.text = dat.getValue().toString() + ": " + c.text;
+
+                                                    }
                                                 }
                                             }
 
@@ -296,6 +311,13 @@ public class MainActivity extends AppCompatActivity
                                         ListView listView = (ListView) findViewById(R.id.messages_listView);
                                         listView.setSelection(listView.getCount() - 1);
                                         listView.setAdapter(adapter);
+
+                                        new Thread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                dialog.dismiss();
+                                            }
+                                        }).start();
                                     }
                                 }
 
