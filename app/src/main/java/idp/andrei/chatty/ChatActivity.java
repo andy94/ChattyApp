@@ -6,7 +6,10 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -31,14 +34,32 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.AccessToken;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.Profile;
+import com.facebook.login.LoginManager;
+import com.facebook.share.Sharer;
+import com.facebook.share.model.ShareLinkContent;
+import com.facebook.share.model.SharePhoto;
+import com.facebook.share.model.SharePhotoContent;
+import com.facebook.share.widget.ShareDialog;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONObject;
+
+import java.io.FileNotFoundException;
+import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
@@ -48,6 +69,7 @@ import idp.andrei.chatty.utils.Chat;
 import idp.andrei.chatty.utils.Friend;
 import idp.andrei.chatty.utils.User;
 
+import static android.provider.UserDictionary.Words.APP_ID;
 import static android.text.format.DateUtils.getRelativeTimeSpanString;
 
 public class ChatActivity extends AppCompatActivity {
@@ -56,6 +78,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private ChatActivity.MessageListAdapter adapter;
     private String chatID = "";
+    private String chatName = "";
     private String u1uid = "";
     private String u2uid = "";
     private String u1name = "";
@@ -182,7 +205,6 @@ public class ChatActivity extends AppCompatActivity {
 
         builerViewMembers = new AlertDialog.Builder(this);
         builerViewMembers.setTitle("Group members:");
-
 
 
         if (isGroup && cuid.equals("")) { // first time in this group
@@ -314,7 +336,34 @@ public class ChatActivity extends AppCompatActivity {
         });
 
 
+        msg_builer = new AlertDialog.Builder(this);
+        msg_builer.setTitle("Select messages");
+
+
+        shareDialog = new ShareDialog(this);
+        CallbackManager callbackManager = CallbackManager.Factory.create();
+        shareDialog.registerCallback(callbackManager, new
+                FacebookCallback<Sharer.Result>() {
+                    @Override
+                    public void onSuccess(Sharer.Result result) {
+                        Toast.makeText(getApplicationContext(), "Success", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onCancel() {
+                        Toast.makeText(getApplicationContext(), "Not Success", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(FacebookException error) {
+                    }
+                });
+
+
     }
+
+    private AlertDialog.Builder msg_builer;
+    private ShareDialog shareDialog;
 
     private void makeAdaptor(String chatUid) {
 
@@ -470,6 +519,147 @@ public class ChatActivity extends AppCompatActivity {
 
         } else if (id == R.id.share_conversation) {
 
+            LoginManager.getInstance()
+                    .logInWithPublishPermissions(this, Arrays.asList("publish_actions"));
+
+            final ArrayList<Chat> chats = new ArrayList<>();
+
+            DatabaseReference friendRef = User.firebaseReference.child("chats").child(chatID).child("mesg");
+            friendRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (snapshot != null) {
+                        for (DataSnapshot mesg : snapshot.getChildren()) { /* For each message */
+                            Chat c = new Chat();
+                            for (DataSnapshot data : mesg.getChildren()) {
+                                if (data.getKey().toString().equalsIgnoreCase("text")) {
+                                    c.text = data.getValue().toString();
+                                }
+
+                                if (data.getKey().toString().equalsIgnoreCase("authorID")) {
+                                    c.authorID = data.getValue().toString();
+                                }
+
+                                if (data.getKey().toString().equalsIgnoreCase("authorName")) {
+                                    c.authorName = data.getValue().toString();
+                                }
+
+                                if (data.getKey().toString().equalsIgnoreCase("date")) {
+                                    c.date = (long) data.getValue();
+                                }
+                            }
+                            chats.add(c);
+
+
+                        }
+
+                        final CharSequence chats_name[] = new CharSequence[chats.size() + 1];
+                        chats_name[0] = "ALL MESSAGES";
+                        int index = 1;
+
+                        final Map<String, Chat> chats_map = new HashMap<String, Chat>();
+
+                        for (Chat c : chats) {
+                            chats_name[index] = c.text;
+                            index++;
+                            chats_map.put(c.text, c);
+                        }
+
+                        final ArrayList<Chat> final_C = new ArrayList<>();
+
+
+                        final boolean[] checked = new boolean[chats.size() + 1];
+
+                        msg_builer.setMultiChoiceItems(chats_name, checked, new DialogInterface.OnMultiChoiceClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which,
+                                                boolean isChecked) {
+                                String n = chats_name[which].toString();
+
+                                if (n.equals("ALL MESSAGES")) {
+
+
+                                    final_C.clear();
+                                    if (isChecked) {
+                                        for (Map.Entry<String, Chat> e : chats_map.entrySet()) {
+                                            final_C.add(e.getValue());
+                                        }
+                                    }
+                                    return;
+                                }
+
+                                if (isChecked && final_C.indexOf(chats_map.get(n))<=0) {
+                                    final_C.add(chats_map.get(n));
+                                } else {
+                                    final_C.remove(chats_map.get(n));
+                                }
+
+                            }
+                        });
+
+
+
+                        msg_builer.setPositiveButton("Share", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int id) {
+
+                                GraphRequest request = GraphRequest.newPostRequest(AccessToken.getCurrentAccessToken(), "me/feed", null, new GraphRequest.Callback() {
+                                    @Override
+                                    public void onCompleted(GraphResponse response) {
+                                        Toast.makeText(getApplicationContext(), "Conversation shared!", Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                                Bundle parameters = new Bundle();
+
+                                String message;
+                                Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+
+                                if(final_C.isEmpty()){
+                                    Toast.makeText(getApplicationContext(), "No Message Selected", Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+
+                                if(group){
+                                    message = toolbar.getTitle().toString() + " Group Conversation\n\n";
+                                }
+                                else{
+                                    message = "Conversation with: " + toolbar.getTitle().toString() + "\n\n";
+                                }
+
+                                for(Chat c : final_C){
+                                    message+=c.authorName+ ": " + c.text + "\n";
+                                }
+
+
+
+
+                                parameters.putString("message", message);
+                                request.setParameters(parameters);
+                                request.executeAsync();
+                            }
+                        })
+                                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int id) {
+
+
+                                    }
+                                });
+
+                        msg_builer.show();
+                    }
+
+
+                }
+
+                @Override
+                public void onCancelled(DatabaseError firebaseError) {
+                }
+            });
+
+
+
+
 
         } else if (id == R.id.view_members) {
 
@@ -478,14 +668,14 @@ public class ChatActivity extends AppCompatActivity {
             dbr.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot snapshot) {
-                    for(DataSnapshot usr : snapshot.getChildren()){
+                    for (DataSnapshot usr : snapshot.getChildren()) {
                         users.add(usr.getValue().toString());
                     }
 
                     final CharSequence usersName[] = new CharSequence[users.size()];
                     int index = 0;
 
-                    for(String u : users){
+                    for (String u : users) {
                         usersName[index] = u;
                         index++;
                     }
@@ -504,8 +694,6 @@ public class ChatActivity extends AppCompatActivity {
 
                 }
             });
-
-
 
 
         } else if (id == R.id.leave_group) {
