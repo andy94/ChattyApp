@@ -167,6 +167,7 @@ public class ChatActivity extends AppCompatActivity {
 
             if (list.get(position).authorID.equals(User.id)) {
                 holder.author.setText("Me");
+                holder.author.setTextColor(Color.parseColor("#21ADDA"));
 
             } else {
                 holder.author.setText(list.get(position).authorName);
@@ -203,6 +204,16 @@ public class ChatActivity extends AppCompatActivity {
                         manager.enqueue(request);
 
                         Toast.makeText(ChatActivity.this, "Downloading " +  cf.fileName , Toast.LENGTH_SHORT).show();
+
+                    }
+                });
+            }
+            else{
+                holder.text.setTextColor(Color.parseColor("#3E4041"));
+                final View currentView = view;
+                view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
 
                     }
                 });
