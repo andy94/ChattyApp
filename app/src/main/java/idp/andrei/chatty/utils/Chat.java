@@ -1,5 +1,8 @@
 package idp.andrei.chatty.utils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by Andrei on 3/25/2017.
  */
@@ -13,4 +16,11 @@ public class Chat {
     public long date;
     public boolean seen;
     public boolean group;
+    public boolean isFile;
+    public ChatFile file;
+
+
+
 }
+
+

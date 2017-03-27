@@ -4,4 +4,5 @@
     <color name="colorPrimaryDark">#33CCFE</color>
     <color name="colorAccent">#FF4081</color>
     <color name="colorFacebook">#3b5998</color>
+    <color name="fileColor">#3c9337</color>
 </resources>

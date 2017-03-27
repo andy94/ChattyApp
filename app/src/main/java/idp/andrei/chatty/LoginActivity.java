@@ -66,6 +66,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.google.firebase.storage.FirebaseStorage;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
@@ -122,6 +123,9 @@ public class LoginActivity extends AppCompatActivity {
 
 
         User.firebaseReference = FirebaseDatabase.getInstance().getReference();
+        User.firebaseStorage = FirebaseStorage.getInstance();
+        User.firebaseStorageReference = User.firebaseStorage.getReference();
+
         mAuth = FirebaseAuth.getInstance();
 
         mAuthListener = new FirebaseAuth.AuthStateListener() {
@@ -199,6 +203,8 @@ public class LoginActivity extends AppCompatActivity {
                                     User.lastLoginTime = lastLoginTime;
                                     User.profilePictureUrl = pictureUrl;
                                     User.firebaseReference = FirebaseDatabase.getInstance().getReference();
+                                    User.firebaseStorage = FirebaseStorage.getInstance();
+                                    User.firebaseStorageReference = User.firebaseStorage.getReference();
                                     User.friends = friends;
                                     User.isOnline = true;
 

@@ -1,25 +1,32 @@
 package idp.andrei.chatty;
 
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.text.format.DateUtils;
+import android.text.format.Formatter;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -47,16 +54,23 @@ import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.model.SharePhoto;
 import com.facebook.share.model.SharePhotoContent;
 import com.facebook.share.widget.ShareDialog;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.StorageMetadata;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Array;
+import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,12 +80,14 @@ import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import idp.andrei.chatty.utils.Chat;
+import idp.andrei.chatty.utils.ChatFile;
 import idp.andrei.chatty.utils.Friend;
 import idp.andrei.chatty.utils.User;
 
 import static android.provider.UserDictionary.Words.APP_ID;
 import static android.text.format.DateUtils.getRelativeTimeSpanString;
 
+@SuppressWarnings("ALL")
 public class ChatActivity extends AppCompatActivity {
 
     private ProgressDialog dialog;
@@ -159,17 +175,22 @@ public class ChatActivity extends AppCompatActivity {
             holder.date.setText(timePassedString);
             holder.seen.setText(list.get(position).seen ? "seen" : "");
 
+            if (list.get(position).isFile) {
+                holder.text.setTextColor(Color.rgb(60, 147, 55));
 
-//            final View currentView = view;
-//            view.setOnClickListener(new View.OnClickListener(){
-//                @Override
-//                public void onClick(View v) {
-//                    currentView.setBackgroundColor(Color.parseColor("#D3D3D3"));
-//                    Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
-//                    intent.putExtra("uid", list.get(position).uid);
-//                    startActivity(intent);
-//                }
-//            });
+                final View currentView = view;
+                view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(ChatActivity.this,  list.get(position).file.fileName, Toast.LENGTH_SHORT).show();
+
+
+                        // DOWNLOAD
+                    }
+                });
+            }
+
+
             return view;
         }
     }
@@ -384,6 +405,8 @@ public class ChatActivity extends AppCompatActivity {
 
                     for (DataSnapshot mesg : snapshot.getChildren()) { /* For each message */
                         Chat c = new Chat();
+                        c.isFile = false;
+                        c.file = null;
                         for (DataSnapshot data : mesg.getChildren()) {
                             if (data.getKey().toString().equalsIgnoreCase("text")) {
                                 c.text = data.getValue().toString();
@@ -399,6 +422,29 @@ public class ChatActivity extends AppCompatActivity {
 
                             if (data.getKey().toString().equalsIgnoreCase("date")) {
                                 c.date = (long) data.getValue();
+                            }
+
+                            if (data.getKey().toString().equalsIgnoreCase("file")) {
+                                c.isFile = true;
+                                ChatFile cf = new ChatFile();
+
+                                for (DataSnapshot inf : data.getChildren()) {
+                                    if (inf.getKey().toString().equalsIgnoreCase("completePath")) {
+                                        cf.completePath = inf.getValue().toString();
+                                    }
+                                    if (inf.getKey().toString().equalsIgnoreCase("fileName")) {
+                                        cf.fileName = inf.getValue().toString();
+                                    }
+                                    if (inf.getKey().toString().equalsIgnoreCase("storageName")) {
+                                        cf.storageName = inf.getValue().toString();
+                                    }
+                                    if (inf.getKey().toString().equalsIgnoreCase("senderIP")) {
+                                        cf.senderIP = inf.getValue().toString();
+                                    }
+                                }
+
+                                c.file = cf;
+
                             }
                         }
                         chats.add(c);
@@ -448,6 +494,145 @@ public class ChatActivity extends AppCompatActivity {
 
         }
         return true;
+    }
+
+    private static final int FILE_SELECT_CODE = 0;
+
+    private void showFileChooser() {
+
+        verifyStoragePermissions(this);
+
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+        try {
+            startActivityForResult(
+                    Intent.createChooser(intent, "Select a File to Upload"),
+                    FILE_SELECT_CODE);
+        } catch (android.content.ActivityNotFoundException ex) {
+            Toast.makeText(this, "Please install a File Manager.",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private static final int REQUEST_EXTERNAL_STORAGE = 1;
+    private static String[] PERMISSIONS_STORAGE = {
+            "android.permission.READ_EXTERNAL_STORAGE",
+            "android.permission.WRITE_EXTERNAL_STORAGE"
+    };
+
+    public static void verifyStoragePermissions(Activity activity) {
+        // Check if we have write permission
+        int permission = ActivityCompat.checkSelfPermission(activity, "android.permission.WRITE_EXTERNAL_STORAGE");
+
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            // We don't have permission so prompt the user
+            ActivityCompat.requestPermissions(
+                    activity,
+                    PERMISSIONS_STORAGE,
+                    REQUEST_EXTERNAL_STORAGE
+            );
+        }
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case FILE_SELECT_CODE:
+                if (resultCode == RESULT_OK) {
+                    Uri uri = data.getData();
+                    String path = getPath(this, uri);
+                    // Initiate the upload
+
+                    Uri file = Uri.fromFile(new File(path));
+
+                    WifiManager wm = (WifiManager) getSystemService(WIFI_SERVICE);
+                    String ip = Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
+
+                    final String completePath = file.toString();
+                    final String fileName = file.getLastPathSegment();
+                    final long date = System.currentTimeMillis();
+                    final String storageName = User.id + date + fileName;
+                    final String senderIP = ip;
+
+
+                    StorageReference riversRef = User.firebaseStorage.getReference().child("chatty_files").child(storageName);
+
+                    UploadTask uploadTask = riversRef.putFile(file);
+                    final ProgressDialog d = ProgressDialog.show(ChatActivity.this, "", "Uploading...", true);
+
+                    // Register observers to listen for when the download is done or if it fails
+                    uploadTask.addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception exception) {
+                            // Handle unsuccessful uploads
+                            Toast.makeText(getApplication(), exception.toString(),
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                            // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+                            StorageMetadata data = taskSnapshot.getMetadata();
+
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    d.dismiss();
+                                }
+                            }).start();
+
+                            String downloadURL = data.getDownloadUrl().toString();
+
+
+                            Map<String, Object> mesg = new HashMap<>();
+                            mesg.put("text", fileName);
+                            mesg.put("authorID", User.id);
+                            mesg.put("authorName", User.name);
+                            mesg.put("date", date);
+
+                            Map<String, Object> file = new HashMap<>();
+                            file.put("completePath", completePath);
+                            file.put("fileName", fileName);
+                            file.put("storageName", storageName);
+                            file.put("senderIP", senderIP);
+
+                            mesg.put("file", file);
+
+                            User.firebaseReference.child("chats").child(chatID).child("mesg").push().setValue(mesg);
+
+                            Toast.makeText(getApplication(), "File uploaded",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                }
+                break;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    public static String getPath(Context context, Uri uri) {
+        if ("content".equalsIgnoreCase(uri.getScheme())) {
+            String[] projection = {"_data"};
+            Cursor cursor = null;
+
+            try {
+                cursor = context.getContentResolver().query(uri, projection, null, null, null);
+                int column_index = cursor.getColumnIndexOrThrow("_data");
+                if (cursor.moveToFirst()) {
+                    return cursor.getString(column_index);
+                }
+            } catch (Exception e) {
+                // Eat it
+            }
+        } else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            return uri.getPath();
+        }
+
+        return null;
     }
 
     @Override
@@ -516,6 +701,8 @@ public class ChatActivity extends AppCompatActivity {
 
 
         } else if (id == R.id.send_file) {
+
+            showFileChooser();
 
         } else if (id == R.id.share_conversation) {
 
@@ -588,7 +775,7 @@ public class ChatActivity extends AppCompatActivity {
                                     return;
                                 }
 
-                                if (isChecked && final_C.indexOf(chats_map.get(n))<=0) {
+                                if (isChecked && final_C.indexOf(chats_map.get(n)) <= 0) {
                                     final_C.add(chats_map.get(n));
                                 } else {
                                     final_C.remove(chats_map.get(n));
@@ -596,7 +783,6 @@ public class ChatActivity extends AppCompatActivity {
 
                             }
                         });
-
 
 
                         msg_builer.setPositiveButton("Share", new DialogInterface.OnClickListener() {
@@ -614,23 +800,20 @@ public class ChatActivity extends AppCompatActivity {
                                 String message;
                                 Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 
-                                if(final_C.isEmpty()){
+                                if (final_C.isEmpty()) {
                                     Toast.makeText(getApplicationContext(), "No Message Selected", Toast.LENGTH_LONG).show();
                                     return;
                                 }
 
-                                if(group){
+                                if (group) {
                                     message = toolbar.getTitle().toString() + " Group Conversation\n\n";
-                                }
-                                else{
+                                } else {
                                     message = "Conversation with: " + toolbar.getTitle().toString() + "\n\n";
                                 }
 
-                                for(Chat c : final_C){
-                                    message+=c.authorName+ ": " + c.text + "\n";
+                                for (Chat c : final_C) {
+                                    message += c.authorName + ": " + c.text + "\n";
                                 }
-
-
 
 
                                 parameters.putString("message", message);
@@ -656,9 +839,6 @@ public class ChatActivity extends AppCompatActivity {
                 public void onCancelled(DatabaseError firebaseError) {
                 }
             });
-
-
-
 
 
         } else if (id == R.id.view_members) {

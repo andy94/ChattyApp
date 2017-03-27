@@ -6,6 +6,9 @@ import android.widget.ImageView;
 
 import com.facebook.login.widget.ProfilePictureView;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +29,8 @@ public class User {
 
     public static String profilePictureUrl;
     public static DatabaseReference firebaseReference;
+    public static StorageReference firebaseStorageReference;
+    public static FirebaseStorage firebaseStorage;
     public static Map<String,String> friends;
 
     public static Map<String, Object> getMapForFirebase(){
