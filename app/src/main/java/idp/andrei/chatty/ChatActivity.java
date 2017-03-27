@@ -70,11 +70,19 @@ import com.squareup.picasso.Picasso;
 
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Array;
+import java.net.Socket;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -188,27 +196,35 @@ public class ChatActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
 
+                        boolean okDirectly = true;
 
-                        // DOWNLOAD
                         final ChatFile cf = list.get(position).file;
 
-                        StorageReference fileRef = User.firebaseStorage.getReference().child(cf.storageName);
+
+
+                                // DOWNLOAD directly:
+//                                Toast.makeText(ChatActivity.this, "Downloading from client", Toast.LENGTH_SHORT).show();
+                                ClientRxThread clientRxThread = new ClientRxThread(cf.senderIP, 8080, cf);
+                                clientRxThread.start();
 
 
 
-                        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(cf.uri));
-                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "chatty_" + cf.fileName);
-                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED); // to notify when download is complete
-                        request.allowScanningByMediaScanner();// if you want to be available from media players
-                        DownloadManager manager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-                        manager.enqueue(request);
+                        // DOWNLOAD from Firebase:
+//                        Toast.makeText(ChatActivity.this, "Downloading from firebase", Toast.LENGTH_SHORT).show();
 
-                        Toast.makeText(ChatActivity.this, "Downloading " +  cf.fileName , Toast.LENGTH_SHORT).show();
+//                        StorageReference fileRef = User.firebaseStorage.getReference().child(cf.storageName);
+//
+//                        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(cf.uri));
+//                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "chatty_" + cf.fileName);
+//                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED); // to notify when download is complete
+//                        request.allowScanningByMediaScanner();// if you want to be available from media players
+//                        DownloadManager manager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+//                        manager.enqueue(request);
+
 
                     }
                 });
-            }
-            else{
+            } else {
                 holder.text.setTextColor(Color.parseColor("#3E4041"));
                 final View currentView = view;
                 view.setOnClickListener(new View.OnClickListener() {
@@ -222,6 +238,128 @@ public class ChatActivity extends AppCompatActivity {
 
             return view;
         }
+
+        private class ClientRxThread extends Thread {
+            String dstAddress;
+            int dstPort;
+            ChatFile cf;
+
+            ClientRxThread(String address, int port, ChatFile chatFile) {
+                dstAddress = address;
+                dstPort = port;
+                cf = chatFile;
+            }
+
+            @Override
+            public void run() {
+                Socket socket = null;
+
+                try {
+                    socket = new Socket(dstAddress, dstPort);
+
+                    // Send path:
+                    byte[] bytes = cf.completePath.getBytes();
+                    OutputStream os = socket.getOutputStream();
+                    os.write(bytes, 0, bytes.length);
+                    os.flush();
+
+                    InputStream is = socket.getInputStream();
+                    DataInputStream dis = new DataInputStream(is);
+
+                    // Get len:
+                    int fileLen = dis.readInt();
+
+                    if(fileLen == 0){
+
+                        // DOWNLOAD from Firebase:
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(ChatActivity.this, "Downloading from firebase", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
+                        StorageReference fileRef = User.firebaseStorage.getReference().child(cf.storageName);
+
+                        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(cf.uri));
+                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "chatty_" + cf.fileName);
+                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED); // to notify when download is complete
+                        request.allowScanningByMediaScanner();// if you want to be available from media players
+                        DownloadManager manager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                        manager.enqueue(request);
+
+                        return;
+                    }
+
+
+                    File file = new File(
+                            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                            "chatty_user_" + cf.fileName);
+
+                    byte[] fileBytes = new byte[1024];
+                    is = socket.getInputStream();
+                    FileOutputStream fos = new FileOutputStream(file);
+                    BufferedOutputStream bos = new BufferedOutputStream(fos);
+                    int readBytes = 0;
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(ChatActivity.this, "Downloading from user", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                    // Receive file
+                    while(readBytes<fileLen){
+                        int bytesRead = is.read(fileBytes, 0, fileBytes.length);
+                        bos.write(fileBytes, 0, bytesRead);
+                        bos.flush();
+                        readBytes += bytesRead;
+                    }
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(ChatActivity.this, "Done", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                    is.close();
+                    dis.close();
+                    fos.close();
+                    bos.close();
+                    socket.close();
+
+                } catch (Exception e) {
+                    // DOWNLOAD from Firebase:
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(ChatActivity.this, "Downloading from firebase", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                    StorageReference fileRef = User.firebaseStorage.getReference().child(cf.storageName);
+
+                    DownloadManager.Request request = new DownloadManager.Request(Uri.parse(cf.uri));
+                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "chatty_" + cf.fileName);
+                    request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED); // to notify when download is complete
+                    request.allowScanningByMediaScanner();// if you want to be available from media players
+                    DownloadManager manager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                    manager.enqueue(request);
+
+                } finally {
+                    if (socket != null) {
+                        try {
+                            socket.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
+
     }
 
     @Override
@@ -583,7 +721,7 @@ public class ChatActivity extends AppCompatActivity {
                     WifiManager wm = (WifiManager) getSystemService(WIFI_SERVICE);
                     String ip = Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
 
-                    final String completePath = file.toString();
+                    final String completePath = path;
                     final String fileName = file.getLastPathSegment();
                     final long date = System.currentTimeMillis();
                     final String storageName = User.id + date + fileName;

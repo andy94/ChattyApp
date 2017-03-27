@@ -1,11 +1,15 @@
 package idp.andrei.chatty;
 
+import android.app.ActivityManager;
 import android.app.ProgressDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.media.Image;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.view.LayoutInflater;
@@ -39,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import idp.andrei.chatty.utils.Chat;
 import idp.andrei.chatty.utils.Friend;
+import idp.andrei.chatty.utils.SocketService;
 import idp.andrei.chatty.utils.User;
 
 public class MainActivity extends AppCompatActivity
@@ -167,6 +172,42 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private ServiceConnection mServiceConn = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        User.firebaseReference.child("users").child(User.id).child("isOnline").setValue(false);
+
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -204,6 +245,14 @@ public class MainActivity extends AppCompatActivity
 
         navigationView.getMenu().getItem(2).setChecked(true);
         /* END Navigation *************************************************************************/
+
+        // Background Service:
+        if (!isMyServiceRunning(SocketService.class)) {
+
+            Intent mServiceIntent = new Intent(this, SocketService.class);
+            bindService(mServiceIntent, mServiceConn, Context.BIND_AUTO_CREATE | Context.BIND_ABOVE_CLIENT);
+            startService(mServiceIntent);
+        }
 
 
 
