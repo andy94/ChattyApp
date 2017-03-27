@@ -9,4 +9,5 @@ public class ChatFile {
     public String fileName;
     public String storageName;
     public String senderIP;
+    public String uri;
 }

@@ -3,6 +3,7 @@ package idp.andrei.chatty;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -15,6 +16,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -60,6 +62,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -69,6 +72,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
@@ -182,10 +186,24 @@ public class ChatActivity extends AppCompatActivity {
                 view.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Toast.makeText(ChatActivity.this,  list.get(position).file.fileName, Toast.LENGTH_SHORT).show();
 
 
                         // DOWNLOAD
+                        final ChatFile cf = list.get(position).file;
+
+                        StorageReference fileRef = User.firebaseStorage.getReference().child(cf.storageName);
+
+
+
+                        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(cf.uri));
+                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "chatty_" + cf.fileName);
+                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED); // to notify when download is complete
+                        request.allowScanningByMediaScanner();// if you want to be available from media players
+                        DownloadManager manager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                        manager.enqueue(request);
+
+                        Toast.makeText(ChatActivity.this, "Downloading " +  cf.fileName , Toast.LENGTH_SHORT).show();
+
                     }
                 });
             }
@@ -441,6 +459,9 @@ public class ChatActivity extends AppCompatActivity {
                                     if (inf.getKey().toString().equalsIgnoreCase("senderIP")) {
                                         cf.senderIP = inf.getValue().toString();
                                     }
+                                    if (inf.getKey().toString().equalsIgnoreCase("uri")) {
+                                        cf.uri = inf.getValue().toString();
+                                    }
                                 }
 
                                 c.file = cf;
@@ -598,6 +619,7 @@ public class ChatActivity extends AppCompatActivity {
                             file.put("fileName", fileName);
                             file.put("storageName", storageName);
                             file.put("senderIP", senderIP);
+                            file.put("uri", downloadURL);
 
                             mesg.put("file", file);
 
