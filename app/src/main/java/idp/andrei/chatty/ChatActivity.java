@@ -200,26 +200,9 @@ public class ChatActivity extends AppCompatActivity {
 
                         final ChatFile cf = list.get(position).file;
 
-
-
-                                // DOWNLOAD directly:
-//                                Toast.makeText(ChatActivity.this, "Downloading from client", Toast.LENGTH_SHORT).show();
-                                ClientRxThread clientRxThread = new ClientRxThread(cf.senderIP, 8080, cf);
-                                clientRxThread.start();
-
-
-
-                        // DOWNLOAD from Firebase:
-//                        Toast.makeText(ChatActivity.this, "Downloading from firebase", Toast.LENGTH_SHORT).show();
-
-//                        StorageReference fileRef = User.firebaseStorage.getReference().child(cf.storageName);
-//
-//                        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(cf.uri));
-//                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "chatty_" + cf.fileName);
-//                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED); // to notify when download is complete
-//                        request.allowScanningByMediaScanner();// if you want to be available from media players
-//                        DownloadManager manager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-//                        manager.enqueue(request);
+                        // Maybe here should take the most recent ip???!
+                        ClientRxThread clientRxThread = new ClientRxThread(cf.senderIP, 8080, cf);
+                        clientRxThread.start();
 
 
                     }
@@ -269,7 +252,7 @@ public class ChatActivity extends AppCompatActivity {
                     // Get len:
                     int fileLen = dis.readInt();
 
-                    if(fileLen == 0){
+                    if (fileLen == 0) {
 
                         // DOWNLOAD from Firebase:
                         runOnUiThread(new Runnable() {
@@ -283,8 +266,8 @@ public class ChatActivity extends AppCompatActivity {
 
                         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(cf.uri));
                         request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "chatty_" + cf.fileName);
-                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED); // to notify when download is complete
-                        request.allowScanningByMediaScanner();// if you want to be available from media players
+                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                        request.allowScanningByMediaScanner();
                         DownloadManager manager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
                         manager.enqueue(request);
 
@@ -310,7 +293,7 @@ public class ChatActivity extends AppCompatActivity {
                     });
 
                     // Receive file
-                    while(readBytes<fileLen){
+                    while (readBytes < fileLen) {
                         int bytesRead = is.read(fileBytes, 0, fileBytes.length);
                         bos.write(fileBytes, 0, bytesRead);
                         bos.flush();

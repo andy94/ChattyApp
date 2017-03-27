@@ -101,7 +101,11 @@ public class GroupsActivity extends AppCompatActivity
 
             // Set name in TextView
             holder.friendName.setText(list.get(position).authorName);
+
             String txt = list.get(position).text;
+            if(txt == null){
+                txt = "";
+            }
             int leng = txt.length();
             leng = leng <=25 ? leng : 25;
             holder.lastMesg.setText(txt.substring(0,leng));

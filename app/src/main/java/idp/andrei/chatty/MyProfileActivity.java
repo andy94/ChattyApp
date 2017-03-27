@@ -63,8 +63,9 @@ public class MyProfileActivity extends AppCompatActivity
         final Button button = (Button) findViewById(R.id.logOutButton);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                LoginManager.getInstance().logOut();
+                User.firebaseReference.child("users").child(User.id).child("isOnline").setValue(false);
 
+                LoginManager.getInstance().logOut();
                 Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
                 startActivity(intent);
             }
