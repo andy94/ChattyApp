@@ -3,6 +3,7 @@ package idp.andrei.chatty;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -11,6 +12,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -109,7 +112,52 @@ public class LoginActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         // Pass the activity result back to the Facebook SDK
-        mCallbackManager.onActivityResult(requestCode, resultCode, data);
+        try {
+            mCallbackManager.onActivityResult(requestCode, resultCode, data);
+        }catch(Exception e){
+
+        }
+    }
+
+    public class CheckNetwork {
+
+
+        private final String TAG = CheckNetwork.class.getSimpleName();
+
+
+
+        public boolean isInternetAvailable(Context context)
+        {
+            NetworkInfo info = (NetworkInfo) ((ConnectivityManager)
+                    context.getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
+
+            if (info == null)
+            {
+                Log.d(TAG,"no internet connection");
+                return false;
+            }
+            else
+            {
+                if(info.isConnected())
+                {
+                    Log.d(TAG," internet connection available...");
+                    return true;
+                }
+                else
+                {
+                    Log.d(TAG," internet connection");
+                    return true;
+                }
+
+            }
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+
+            finish(); // finish activit
+
     }
 
     @Override
@@ -120,6 +168,13 @@ public class LoginActivity extends AppCompatActivity {
 
 
         User.name = "First Last";
+
+        CheckNetwork cn = new CheckNetwork();
+        if(!cn.isInternetAvailable(getApplicationContext())){
+            Toast.makeText(LoginActivity.this,"No Internet Connection",1000).show();
+            startActivityForResult(new Intent(android.provider.Settings.ACTION_SETTINGS), 0);
+            return;
+        }
 
 
         User.firebaseReference = FirebaseDatabase.getInstance().getReference();
@@ -322,7 +377,12 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onStart() {
         super.onStart();
-        mAuth.addAuthStateListener(mAuthListener);
+        try{
+            mAuth.addAuthStateListener(mAuthListener);
+
+        }catch (Exception e){
+
+        }
     }
 
     @Override

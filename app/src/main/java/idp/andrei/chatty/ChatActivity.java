@@ -15,8 +15,12 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.StrictMode;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -29,6 +33,7 @@ import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.text.format.DateUtils;
 import android.text.format.Formatter;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -68,20 +73,33 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
+import org.w3c.dom.Document;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.net.Socket;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -356,6 +374,46 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+    private class LongOperation extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            StringBuilder sb= new StringBuilder();
+            HttpClient client= new DefaultHttpClient();
+            HttpGet httpget = new HttpGet("http://checkip.amazonaws.com/");
+            try {
+                HttpResponse response = client.execute(httpget);
+                StatusLine sl = response.getStatusLine();
+                int sc = sl.getStatusCode();
+                if (sc==200)
+                {
+                    HttpEntity ent = response.getEntity();
+                    InputStream inpst = ent.getContent();
+                    BufferedReader rd= new BufferedReader(new InputStreamReader(inpst));
+                    String line;
+                    while ((line=rd.readLine())!=null)
+                    {
+                        sb.append(line);
+                    }
+                }
+                else
+                {
+                    Log.e("log_tag","I didn't  get the response!");
+                }
+            } catch (ClientProtocolException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return sb.toString();
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+           externalIp = result;
+        }
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -417,8 +475,10 @@ public class ChatActivity extends AppCompatActivity {
 
         dialog = ProgressDialog.show(ChatActivity.this, "", "Loading. Please wait", true);
 
+        // Take external IP;
+//        ReadHttpResponse("http://checkip.amazonaws.com/");
+        new LongOperation().execute();
 
-//      Toast.makeText(ChatActivity.this,  "", Toast.LENGTH_SHORT).show();
 
 
         DatabaseReference dbr = User.firebaseReference.child("users").child(User.id).child("chats");
@@ -690,6 +750,47 @@ public class ChatActivity extends AppCompatActivity {
     }
 
 
+    private class ExternalIP extends AsyncTask<Void, Void, String> {
+
+        protected String doInBackground(Void... urls) {
+            String ip = null;
+
+            try {
+                HttpClient httpclient = new DefaultHttpClient();
+                HttpGet httpget = new HttpGet("http://wtfismyip.com/text");
+                HttpResponse response;
+
+                response = httpclient.execute(httpget);
+
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    long len = entity.getContentLength();
+                    if (len != -1 && len < 1024) {
+                        String str = EntityUtils.toString(entity);
+                        ip = str.replace("\n", "");
+                    } else {
+                        ip = null;
+                    }
+                } else {
+                    ip = null;
+                }
+
+            } catch (Exception e) {
+                ip = null;
+            }
+
+            return ip;
+        }
+
+        protected void onPostExecute(String result) {
+
+            externalIp = result;
+        }
+    }
+
+    String externalIp = null;
+
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
@@ -699,10 +800,27 @@ public class ChatActivity extends AppCompatActivity {
                     String path = getPath(this, uri);
                     // Initiate the upload
 
+                    if(path == null){
+                        Toast.makeText(getApplication(), "Please select a file from Gallery!",
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
                     Uri file = Uri.fromFile(new File(path));
+
 
                     WifiManager wm = (WifiManager) getSystemService(WIFI_SERVICE);
                     String ip = Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
+
+                    if(externalIp != null){
+                        ip = externalIp;
+                    }
+
+                    StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+                    StrictMode.setThreadPolicy(policy);
+
+
+
 
                     final String completePath = path;
                     final String fileName = file.getLastPathSegment();
@@ -768,7 +886,7 @@ public class ChatActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    public static String getPath(Context context, Uri uri) {
+    public String getPath(Context context, Uri uri) {
         if ("content".equalsIgnoreCase(uri.getScheme())) {
             String[] projection = {"_data"};
             Cursor cursor = null;
